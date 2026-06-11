@@ -1,0 +1,152 @@
+﻿
+@{
+    ViewBag.Title = "AllBills";
+    Layout = "~/Areas/BillSoftware/Views/Shared/_BillLayoutPage.cshtml";
+}
+
+
+<h2>Bills</h2>
+<div class="card">
+    <div class="card-body">
+        <div class="col">
+            <label for="todayDate">Date:</label>
+            <input type="datetime-local" id="todayDate">
+        </div>
+
+        <div class="table-responsive">
+            <table class="table" id="tbl_list" style="width:100%;">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">SrNo.</th>
+                        <th scope="col">Invoice Number</th>
+                        <th scope="col">Bill Date</th>
+                        <th scope="col">Customer Name</th>
+                        <th scope="col">Customer Number</th>
+                        <th scope="col">Total Amount</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+
+            </table>
+        </div>
+    </div>
+</div>
+
+ @*Modal*@ 
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">Product Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="tbl_order" style="width:100%;">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Product Name</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Price</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section scripts{
+    <script type="text/javascript">
+        const today = new Date();
+
+        // Format today's date as YYYY-MM-DD
+        const formattedDate = today.toISOString().slice(0, 16);
+
+        // Set the input field value to today's date
+        document.getElementById('todayDate').value = formattedDate;
+
+
+        $(document).ready(function () {
+            
+            BindProductToTable();
+       })
+
+        function BindProductToTable() {
+            $('#tbl_list').DataTable({
+                pageLength: 100, // Set page length to 100
+                dom: 'Bfrtip', // Define the elements to display
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print' // Add the export buttons you need
+                ],
+                lengthChange: false, // Disable the page length dropdown
+                searching: true, // Keep the search box enabled
+                paging: true, // Enable pagination
+                ajax: {
+                    url : '@Url.RouteUrl("A-List", new {httproute=""})',
+                    dataSrc: ''
+                },
+                columns: [
+
+                    { data: 'BId' },
+                    { data: 'Invoiceno' },
+                    { data: 'BillDate' },
+                    { data: 'Name' },
+                    { data: 'MobileNumber' },
+                    { data: 'TotalPrice' },
+
+                    {
+                        // Action column
+                        data: 'BId',
+                        render: function (data, type, row) {
+                            // View button
+                            var viewButton = '<button class="btn btn-primary" onclick = "ViewProduct(' + data + ')"> View</button >';
+                            return viewButton;
+                        }
+
+                    },
+                    //{
+                    //    data: 'BId',
+                    //    render: function (data, type, row) {
+                    //        // View button
+                    //        var viewButton = '<button class="btn btn-primary" onclick = "ViewProduct(' + data + ')"> View</button >';
+                    //        return viewButton;
+                    //    }
+                    //}
+                ]
+            });
+        }
+
+
+        function ViewProduct(bid) {
+            
+                    $("#productModal").modal('show');
+                    BindOrderDetails(bid);
+        }
+
+        function BindOrderDetails(id) {
+            
+            let url = "@Url.RouteUrl("ViewInvoice" , new {httproute = "", id= "_id"})";
+            url = url.replace("_id", id);
+               $('#tbl_order').DataTable({
+                bDestroy:true,
+                ajax: {
+                    url: url,
+                    dataSrc: ''
+                },
+                    columns: [
+                        { data: 'Productname' },
+                        { data: 'Productquantity' },
+                        { data: 'Producttotal' },
+
+                    ]
+                });
+            }
+
+
+    </script>
+    }

@@ -1,0 +1,363 @@
+﻿@model CherukarasThejas.Areas.BillSoftware.Data.BillPostData
+@{
+    Layout = null;
+    int serialNumber = 1; // Counter for the product list
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHERUKARA'S THEJAS - TAX INVOICE</title>
+    <style>
+        /* All your CSS from the previous step goes here. It is unchanged. */
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .invoice-container {
+            width: 21cm;
+            min-height: 29.7cm;
+            background: white;
+            padding: 1.5cm;
+            box-sizing: border-box;
+            color: #000;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 10px;
+        }
+
+            .header h1 {
+                margin: 0;
+                font-size: 20px;
+                text-transform: uppercase;
+            }
+
+            .header p {
+                margin: 2px 0;
+                font-size: 12px;
+                line-height: 1.3;
+            }
+
+            .header .invoice-title {
+                margin-top: 15px;
+                font-size: 16px;
+                font-weight: bold;
+                text-align: center;
+            }
+
+        .details-table, .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+
+            .details-table th, .details-table td, .summary-table th, .summary-table td {
+                border: 1px solid #000;
+                padding: 6px 8px;
+                text-align: left;
+                vertical-align: top;
+            }
+
+            .details-table .label-cell {
+                width: 1%;
+                white-space: nowrap;
+            }
+
+            .details-table .customer-cell {
+                width: 50%;
+            }
+
+            .details-table .customer-name-address {
+                height: 60px;
+                vertical-align: top;
+            }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+
+            .items-table th, .items-table td {
+                border: 1px solid #000;
+                padding: 6px 8px;
+                text-align: center;
+                vertical-align: middle;
+            }
+
+            .items-table th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+            }
+
+            .items-table .col-item-name {
+                text-align: left;
+            }
+
+            .items-table tfoot td {
+                font-weight: bold;
+                text-align: right;
+            }
+
+                .items-table tfoot td:first-child, .items-table tfoot td:nth-child(2) {
+                    text-align: center;
+                }
+
+        .bottom-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+
+        .bank-details, .amount-summary {
+            width: 48%;
+        }
+
+        .bank-details {
+            border: 1px solid #000;
+            padding: 8px;
+            box-sizing: border-box;
+            font-size: 12px;
+        }
+
+            .bank-details p {
+                margin: 0;
+                line-height: 1.4;
+            }
+
+        .amount-summary .summary-table td:last-child {
+            text-align: right;
+        }
+
+        .final-notes {
+            font-size: 12px;
+            margin-top: 20px;
+            page-break-inside: avoid;
+        }
+
+        .total-in-words-row {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+            .total-in-words-row span {
+                font-weight: bold;
+                margin-right: 10px;
+            }
+
+        .total-in-words-box {
+            flex-grow: 1;
+            border: 1px solid #000;
+            padding: 6px 8px;
+            min-height: 20px;
+        }
+
+        .footer-thankyou {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 40px;
+            font-size: 12px;
+            page-break-inside: avoid;
+        }
+
+        .authorized-signature {
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            text-align: center;
+            width: 150px;
+        }
+
+        @@media print {
+            body {
+                background-color: #fff;
+            }
+
+            .invoice-container {
+                width: 100%;
+                min-height: auto;
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            @@page {
+                size: A4;
+                margin: 1.5cm;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            h1, h2, h3, p, .details-table, .items-table, .bottom-section, .final-notes, .footer-thankyou {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <h1>CHERUKARA'S THEJAS</h1>
+            <p>Cherukara Rice & Flour Mill</p>
+            <p>Nedumpana PO, Kollam, Kerala. 691576</p>
+            <p>Phone: 9495734114, Email: cherukaras1984@gmail.com</p>
+            <div class="invoice-title">TAX INVOICE</div>
+        </div>
+
+        <table class="details-table">
+            <tr>
+                <td class="gstin-cell" colspan="3">GSTIN: <strong>32DOEPK3967K1ZN</strong></td>
+            </tr>
+            <tr>
+                <td class="label-cell">Invoice No.</td>
+                <td class="value-cell">@Model.Invoiceno</td>
+                <td rowspan="4" class="customer-cell customer-name-address">
+                    <strong>Customer:</strong><br />
+                    @Model.Name <br />
+                    @Model.MobileNumber
+                </td>
+            </tr>
+            <tr>
+                <td class="label-cell">Invoice Date</td>
+                <td class="value-cell">@Model.BillDate.ToString("dd-MMM-yyyy hh:mm tt")</td>
+            </tr>
+            <tr>
+                <td class="label-cell">Vehicle No.</td>
+                <td class="value-cell"></td> @* <-- Add property to Model if needed *@
+            </tr>
+            <tr>
+                <td class="label-cell">Customer GSTIN</td>
+                <td class="value-cell">@Model.GSTNumber</td>
+            </tr>
+        </table>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th class="col-sn">Sn</th>
+                    <th class="col-item-name">Item Name</th>
+                    <th class="col-hsn">HSN</th>
+                    <th class="col-qty">QTY</th>
+                    <th class="col-rate">Rate</th>
+                    <th class="col-taxable">Taxable</th>
+                    <th class="col-cgst">CGST</th>
+                    <th class="col-sgst">SGST</th>
+                    <th class="col-igst">IGST</th>
+                    <th class="col-total">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @* --- DYNAMIC PRODUCT LIST RENDERING --- *@
+                @if (Model.ProductList != null)
+                {
+                    foreach (var item in Model.ProductList)
+                    {
+                        <tr>
+                            <td class="col-sn">@(serialNumber++)</td>
+                            <td class="col-item-name">@item.ProductName</td>
+                            <td class="col-hsn">@item.HSN</td>
+                            <td class="col-qty">@item.Quantity</td>
+                            <td class="col-rate">@item.Rate.ToString("F2")</td>
+                            <td class="col-taxable">@item.TaxableAmount.ToString("F2")</td>
+                            <td class="col-cgst">@item.CGSTAmount.ToString("F2")</td>
+                            <td class="col-sgst">@item.SGSTAmount.ToString("F2")</td>
+                            <td class="col-igst">@item.IGSTAmount.ToString("F2")</td>
+                            <td class="col-total">@item.TotalAmount.ToString("F2")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+            <tfoot>
+                @* --- DYNAMIC TOTALS IN FOOTER --- *@
+                <tr>
+                    <td colspan="5"><strong>Grand Total</strong></td>
+                    <td><strong>@Model.ProductList.Sum(p => p.TaxableAmount).ToString("F2")</strong></td>
+                    <td><strong>@Model.ProductList.Sum(p => p.CGSTAmount).ToString("F2")</strong></td>
+                    <td><strong>@Model.ProductList.Sum(p => p.SGSTAmount).ToString("F2")</strong></td>
+                    <td><strong>@Model.ProductList.Sum(p => p.IGSTAmount).ToString("F2")</strong></td>
+                    <td><strong>@Model.ProductList.Sum(p => p.TotalAmount).ToString("F2")</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="bottom-section">
+            <div class="bank-details">
+                <p><strong>Bank Details:</strong></p>
+                <p></p>
+                <p></p>
+                <p></p>
+                <p></p>
+            </div>
+            <div class="amount-summary">
+                <table class="summary-table">
+                    <tr>
+                        <td>Total Amount Before Tax</td>
+                        <td>@Model.TotalTaxable.ToString("F2")</td>
+                    </tr>
+                    <tr>
+                        <td>Total CGST</td>
+                        <td>@Model.TotalCGST.ToString("F2")</td>
+                    </tr>
+                    <tr>
+                        <td>Total SGST</td>
+                        <td>@Model.TotalSGST.ToString("F2")</td>
+                    </tr>
+                    <tr>
+                        <td>Total IGST</td>
+                        <td>@Model.TotalIGST.ToString("F2")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Amount After Tax:</strong></td>
+                        <td><strong>@Model.GrandTotal.ToString("F2")</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="final-notes">
+            <p>(E & O.E.)</p>
+            <div class="total-in-words-row">
+                <span>Total in words:</span>
+                <div class="total-in-words-box">
+                    @* You can implement a helper function to convert number to words *@
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-thankyou">
+            <p>Thank you for shopping with us!</p>
+            <div class="authorized-signature">Authorized Signature</div>
+        </div>
+    </div>
+</body>
+</html>

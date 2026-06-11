@@ -1,0 +1,251 @@
+﻿
+@{
+    ViewBag.Title = "AddProduct";
+    Layout = "~/Areas/BillSoftware/Views/Shared/_BillLayoutPage.cshtml";
+}
+
+
+<div class="card">
+    <div class="card-body">
+
+        <!-- Container for the date and button -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <!-- Date -->
+            <div>
+                <label for="date" class="form-label">Date:</label>
+                <input type="date" id="date" class="form-control" style="width: auto;">
+            </div>
+
+            <!-- Add Item Button -->
+            <button type="button" class="btn btn-primary" onclick="OpenAddProductModal()">
+                Add Item
+            </button>
+        </div>
+
+
+        <div class="container table-container">
+            <table class="table table-striped" id="tbl_productlist">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">SrNo.</th>
+                        <th scope="col">Item Name</th>
+                        <th scope="col">Rate</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">In Stock Available</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <!--<tbody id="itemTableBody">-->
+                <!-- Item rows will be added here dynamically -->
+                <!--</tbody>-->
+            </table>
+        </div>
+    </div>
+</div>
+<!-- Modal Structure -->
+
+@Html.Partial("_AddProductModal")
+
+@section scripts{
+    <script type="text/javascript">
+
+        const today = new Date();
+
+        // Format today's date as YYYY-MM-DD
+        const formattedDate = today.toISOString().split('T')[0];
+
+        // Set the input field value to today's date
+        document.getElementById('date').value = formattedDate;
+
+        $(document).ready(function () {
+            
+            //alert("hello my dudee");
+            BindProductTable();
+
+        })
+
+        function SaveProduct() {
+            
+            //this is the common function for saving the product -> SaveProductCommon so calling this here.
+            SaveProductCommon().then((result) => {//this means we are getting the response from SaveProductCommon() function.
+                
+                if (result.Status) {
+                    //after getting the response in addproduct.chtml we need to relod the table.
+                    //so calling that function.
+                    BindProductTable();
+                    SwalAlert('success', result.Message, 'Success!');
+                    $("#addItemModal").modal('hide');
+                } else {
+                    SwalAlert('error', result.Message, 'Error!');
+                }
+            }).catch((error) => {
+                alert("Error in adding product");
+            });
+        }
+
+        function SaveProduc_oldt() {
+            let PostData = {
+                "PId": $("#saveItemButton").attr("data-pid"),
+                "PName": $("#itemName").val(),
+                "Rate": $("#itemRate").val(),
+                "PQuantity": $("#itemQuantity").val(),
+                "AvailableStock": $("#itemavailable").val(),
+                "Description": $("#itemDescription").val(),
+            }
+            
+
+            //let Url = "@@Url.Action("AddProduct", "AddProduct", new {httproute=""})";
+            let Url = "@Url.RouteUrl("P-Save", new {httproute=""})";
+            
+
+            fetch(Url, {
+                method: 'POST',
+                body: JSON.stringify(PostData),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+
+            }).then((response) => response.json())
+                .then((result) => {
+                    
+                    if (result.Status) {
+                        SwalAlert('success', result.Message, 'Success!');
+                        $("#addItemModal").modal('hide');
+                        BindProductTable();
+                        ClearField();
+                    } else {
+                        SwalAlert('error', result.Message, 'Error!');
+                    }
+
+
+                })
+                .catch((error) => {
+                    
+                    alert("Error in adding product");
+                })
+        }
+
+        function BindProductTable() {
+            $('#tbl_productlist').DataTable({
+                bDestroy: true,
+                pageLength: 100, // Set page length to 100
+                dom: 'Bfrtip', // Define the elements to display
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print' // Add the export buttons you need
+                ],
+                lengthChange: false, // Disable the page length dropdown
+                searching: true, // Keep the search box enabled
+                paging: true, // Enable pagination
+                ajax: {
+                    url: '@Url.RouteUrl("P-List" , new {httproute = ""})',
+                    dataSrc: ''
+                },
+                columns: [
+                    { data: 'PId' },
+                    { data:'PName'},
+                    { data:'Rate'},
+                    { data:'PQuantity'},
+                    { data:'AvailableStock'},
+                    {
+                        data: 'PId', render: function (data, type, row) {
+                            return `<button class="btn btn-primary" onclick="EditProduct(${data})">Edit</button> <button class="btn btn-danger"  onclick="DeleteProduct(${data})">Delete</button>`;
+                        }
+                    }
+                ],
+                 order: [[0, 'desc']] // Sort by the first column (PId) in descending order
+            });
+        }
+
+
+        function DeleteProduct(pid) {
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No, cancel!',
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    let Url = "@Url.RouteUrl("P-Delete", new {httproute="", pid="_pid"})";
+                     Url = Url.replace("_pid", pid);
+
+                    fetch(Url, {
+                        method: 'POST',
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+
+                    }).then(response => response.json())
+                        .then((result) => {
+                            if (result.Status) {
+                                SwalAlert('success', result.Message, 'Success!');
+                                BindProductTable();
+                            } else {
+                                SwalAlert('error', result.Message, 'Error!');
+                            }
+
+                        }).catch((err) => {
+                            console.error(err);
+                            SwalAlert('error', 'Error in deleting product', 'Error!');
+                        })
+
+
+                }
+            });
+        }
+
+        function EditProduct(pid) {
+            
+            let Url = "@Url.RouteUrl("P-Edit", new {httproute="", pid="_pid"})";
+            Url = Url.replace("_pid", pid);
+
+            fetch(Url, {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json"
+                }
+
+            }).then((response) => response.json())
+                .then((result) => {
+                    
+
+                    $("#addItemModal").modal('show');
+                    $("#addItemModalLabel").text('Update Item');
+                    $("#itemName").val(result.PName);
+                    $("#itemRate").val(result.Rate);
+                    $("#itemQuantity").val(result.PQuantity);
+                    $("#itemavailable").val(result.AvailableStock);
+                    $("#itemDescription").val(result.Description);
+
+                    $("#saveItemButton").attr('data-pid', result.PId);
+                })
+                .catch((error) => {
+                    
+                    alert("hello");
+                })
+        }
+
+        function OpenAddProductModal() {
+            $("#addItemModal").modal('show');
+            $("#addItemModalLabel").text('Add Item');
+
+            ClearField();
+        }
+
+        function ClearField() {
+            $("#itemName").val('');
+            $("#itemRate").val('');
+            $("#itemQuantity").val('');
+            $("#itemavailable").val('');
+            $("#itemDescription").val('');
+
+            $("#saveItemButton").attr('data-pid', '');
+        }
+
+    </script>
+}

@@ -1,0 +1,402 @@
+﻿@{
+    ViewBag.Title = "GenerateBill";
+    Layout = "~/Areas/BillSoftware/Views/Shared/_BillLayoutPage.cshtml";
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<div class="card">
+    <div class="card-body">
+
+        <div class="row">
+            <div class="col-md-6">
+                <label for="customerNumber" class="form-label">Customer Number</label>
+                <input type="text" class="form-control" id="customerNumber" onkeyup="GetCustomerName()" placeholder="Enter customer number">
+            </div>
+            <div class="col-md-6">
+                <label for="customerName" class="form-label">Customer Name</label>
+                <input type="text" class="form-control" id="customerName" placeholder="Enter customer name">
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-6">
+                <label for="invoiceNumber" class="form-label">Invoice Number:</label>
+                <input type="text" class="form-control" id="invoiceNumber" value="@ViewBag.InvoiceNumber" readonly />
+            </div>
+            <div class="col-md-6">
+                <label for="billDate" class="form-label">Bill Date</label>
+                <input type="datetime-local" class="form-control" id="billDate">
+            </div>
+        </div>
+
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label for="opt_product">Select Product</label>
+                        <select id="opt_product" class="form-select" onchange="GetProductDetails(this)"></select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="txt_hsn">HSN Code</label>
+                        <input type="text" id="txt_hsn" class="form-control" readonly />
+                    </div>
+                    <div class="col-md-1">
+                        <label for="txt_quantity">QTY</label>
+                        <input type="number" id="txt_quantity" class="form-control" placeholder="0" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="txt_rate">Rate</label>
+                        <input type="number" id="txt_rate" class="form-control" placeholder="0.00" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="txt_taxable">Taxable Amount</label>
+                        <input type="number" id="txt_taxable" class="form-control" readonly placeholder="0.00" />
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-success w-100" onclick="AddProductToTable()">Add Item</button>
+                    </div>
+                </div>
+                <input type="hidden" id="txt_cgst_percent" />
+                <input type="hidden" id="txt_sgst_percent" />
+                <input type="hidden" id="txt_igst_percent" />
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="productTable" class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Sn</th>
+                                <th>Item Name</th>
+                                <th>HSN</th>
+                                <th>QTY</th>
+                                <th>Rate</th>
+                                <th>Taxable</th>
+                                <th>CGST</th>
+                                <th>SGST</th>
+                                <th>IGST</th>
+                                <th>Total</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="row justify-content-end mt-3">
+                    <div class="col-md-5">
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Total Taxable:</td>
+                                <td class="text-end fw-bold" id="spn_totalTaxable">0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Total CGST:</td>
+                                <td class="text-end fw-bold" id="spn_totalCGST">0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Total SGST:</td>
+                                <td class="text-end fw-bold" id="spn_totalSGST">0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Total IGST:</td>
+                                <td class="text-end fw-bold" id="spn_totalIGST">0.00</td>
+                            </tr>
+                            <tr class="fs-5 bg-light">
+                                <td><strong>Grand Total:</strong></td>
+                                <td class="text-end fw-bold" id="spn_grandTotal">0.00</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center mt-3">
+            <button class="btn btn-primary" type="button" onclick="SaveAndPrintBill()">Save & Print Bill</button>
+            <button class="btn btn-secondary ms-2" type="button" onclick="PrintBillOnly()">Print Only</button>
+        </div>
+    </div>
+
+    @using (Html.BeginForm("BulkUpload", "Bill", new { area = "BillSoftware" }, FormMethod.Post, new { enctype = "multipart/form-data" }))
+    {
+        <input type="text" name="customerName" placeholder="Customer Name" class="form-control mb-2" required />
+        <input type="text" name="customerMobile" placeholder="Customer Mobile" class="form-control mb-2" required />
+        <input type="text" name="customerGstin" placeholder="Customer GSTIN" class="form-control mb-2" />
+        <input type="file" name="excelFile" class="form-control mb-2" required />
+        <button type="submit" class="btn btn-primary">Upload and Generate</button>
+    }
+
+</div>
+
+@Html.Partial("_AddProductModal")
+
+@section scripts{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script type="text/javascript">
+        let productArr = [];
+
+        $(document).ready(function () {
+            const today = new Date().toISOString().slice(0, 16);
+            document.getElementById('billDate').value = today;
+
+            $('#opt_product').select2({ placeholder: 'Select a product' });
+            BindItemDrp();
+
+            $("#txt_rate, #txt_quantity").on("input", calculateItem);
+        });
+
+        function BindItemDrp() {
+            // Your existing logic to get the product list for the dropdown is fine.
+            // Example:
+            let url = "@Url.RouteUrl("P-DrpList", new { httproute = "" })"; // Assuming this route exists
+            $.get(url, function (result) {
+                $("#opt_product").append($("<option></option>").val('').text('Select Product'));
+                $.each(result, function (idx, value) {
+                    $("#opt_product").append($("<option></option>").val(value.Value).text(value.Text));
+                });
+            });
+        }
+
+        // Updated to use your named route "P-Details"
+        function GetProductDetails(drp) {
+            let pId = $(drp).val();
+            if (!pId) {
+                clearProductInputs();
+                return;
+            }
+
+            // *** KEY CHANGE HERE ***
+            // Use Url.RouteUrl to correctly generate the URL for your API
+            let url = "@Url.RouteUrl("P-Details", new { httproute = "", pId = "PLACEHOLDER" })";
+            url = url.replace("PLACEHOLDER", pId);
+
+            $.get(url, (product) => {
+                if (product) {
+                    $("#txt_rate").val(product.Rate);
+                    $("#txt_hsn").val(product.HSNNumber); // Property name from C# entity
+                    $("#txt_cgst_percent").val(product.CGSTPercentage);
+                    $("#txt_sgst_percent").val(product.SGSTPercentage);
+                    $("#txt_igst_percent").val(product.IGSTPercentage);
+                    calculateItem();
+                }
+            }).fail((jqXHR, textStatus, errorThrown) => {
+                if(jqXHR.status == 404){
+                    alert("Product with the selected ID was not found.");
+                } else {
+                    alert("Error fetching product details.");
+                }
+                clearProductInputs();
+            });
+        }
+
+        function calculateItem() {
+            const quantity = parseFloat($("#txt_quantity").val()) || 0;
+            const rate = parseFloat($("#txt_rate").val()) || 0;
+            const taxableAmount = quantity * rate;
+            $("#txt_taxable").val(taxableAmount.toFixed(2));
+        }
+
+        function AddProductToTable() {
+            const productId = $("#opt_product").val();
+            if (!productId) {
+                alert("Please select a product.");
+                return;
+            }
+
+            const quantity = parseFloat($("#txt_quantity").val()) || 0;
+            if (quantity <= 0) {
+                 alert("Please enter a valid quantity.");
+                return;
+            }
+
+            const rate = parseFloat($("#txt_rate").val()) || 0;
+            const taxableAmount = quantity * rate;
+            const cgstPercent = parseFloat($("#txt_cgst_percent").val()) || 0;
+            const sgstPercent = parseFloat($("#txt_sgst_percent").val()) || 0;
+            const igstPercent = parseFloat($("#txt_igst_percent").val()) || 0;
+            const cgstAmount = taxableAmount * (cgstPercent / 100);
+            const sgstAmount = taxableAmount * (sgstPercent / 100);
+            const igstAmount = taxableAmount * (igstPercent / 100);
+            const totalAmount = taxableAmount + cgstAmount + sgstAmount + igstAmount;
+
+            let productObj = {
+                "Id": productId,
+                "ProductName": $('#opt_product :selected').text(),
+                "HSN": $("#txt_hsn").val(),
+                "Quantity": quantity,
+                "Rate": rate,
+                "TaxableAmount": taxableAmount,
+                "CGSTPercentage": cgstPercent,
+                "CGSTAmount": cgstAmount,
+                "SGSTPercentage": sgstPercent,
+                "SGSTAmount": sgstAmount,
+                "IGSTPercentage": igstPercent,
+                "IGSTAmount": igstAmount,
+                "TotalAmount": totalAmount
+            };
+
+            productArr.push(productObj);
+            RenderTable();
+            clearProductInputs();
+        }
+
+        function RenderTable() {
+            const tbody = $("#productTable tbody");
+            tbody.empty();
+            let totalTaxable = 0, totalCGST = 0, totalSGST = 0, totalIGST = 0, grandTotal = 0;
+
+            productArr.forEach((p, index) => {
+                let row = `<tr>
+                    <td>${index + 1}</td>
+                    <td>${p.ProductName}</td>
+                    <td>${p.HSN || ''}</td>
+                    <td>${p.Quantity}</td>
+                    <td>${p.Rate.toFixed(2)}</td>
+                    <td>${p.TaxableAmount.toFixed(2)}</td>
+                    <td>${p.CGSTAmount.toFixed(2)}<br><small>(${p.CGSTPercentage}%)</small></td>
+                    <td>${p.SGSTAmount.toFixed(2)}<br><small>(${p.SGSTPercentage}%)</small></td>
+                    <td>${p.IGSTAmount.toFixed(2)}<br><small>(${p.IGSTPercentage}%)</small></td>
+                    <td>${p.TotalAmount.toFixed(2)}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="RemoveProduct(${index})">X</button></td>
+                </tr>`;
+                tbody.append(row);
+
+                totalTaxable += p.TaxableAmount;
+                totalCGST += p.CGSTAmount;
+                totalSGST += p.SGSTAmount;
+                totalIGST += p.IGSTAmount;
+                grandTotal += p.TotalAmount;
+            });
+
+            $("#spn_totalTaxable").text(totalTaxable.toFixed(2));
+            $("#spn_totalCGST").text(totalCGST.toFixed(2));
+            $("#spn_totalSGST").text(totalSGST.toFixed(2));
+            $("#spn_totalIGST").text(totalIGST.toFixed(2));
+            $("#spn_grandTotal").text(grandTotal.toFixed(2));
+        }
+
+        function RemoveProduct(index) {
+            productArr.splice(index, 1);
+            RenderTable();
+        }
+
+        function clearProductInputs() {
+             $('#opt_product').val(null).trigger('change');
+             $("#txt_hsn").val('');
+             $("#txt_quantity").val('');
+             $("#txt_rate").val('');
+             $("#txt_taxable").val('');
+             $("#txt_cgst_percent").val('');
+             $("#txt_sgst_percent").val('');
+             $("#txt_igst_percent").val('');
+        }
+
+        function SaveAndPrintBill() {
+            if (productArr.length === 0) {
+                alert("Please add at least one product to the bill.");
+                return;
+            }
+
+            let PostData = {
+                "Invoiceno": $("#invoiceNumber").val(),
+                "BillDate": $("#billDate").val(),
+                "MobileNumber": $("#customerNumber").val(),
+                "Name": $("#customerName").val(),
+                "GSTNumber": $("#customerGstin").val(),
+                "ProductList": productArr,
+                "TotalTaxable": parseFloat($("#spn_totalTaxable").text()),
+                "TotalCGST": parseFloat($("#spn_totalCGST").text()),
+                "TotalSGST": parseFloat($("#spn_totalSGST").text()),
+                "TotalIGST": parseFloat($("#spn_totalIGST").text()),
+                "GrandTotal": parseFloat($("#spn_grandTotal").text())
+            };
+
+            let saveUrl = "@Url.RouteUrl("B-Add", new { httproute = "" })";
+
+            fetch(saveUrl, {
+                method: 'POST',
+                body: JSON.stringify(PostData),
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result.Status) {
+                    alert(result.Message);
+                    // On successful save, proceed to print
+                    PrintBill(PostData);
+                } else {
+                    alert("An error occurred while saving the bill: " + result.Message);
+                }
+            })
+            .catch(error => {
+                console.error("Error saving bill:", error);
+                alert("A critical error occurred. Could not save the bill.");
+            });
+        }
+
+        /**
+         * Main function for the "Print Only" button.
+         * WORKFLOW: Skips saving and goes directly to printing.
+         */
+        function PrintBillOnly() {
+            if (productArr.length === 0) {
+                alert("Please add at least one product to the bill.");
+                return;
+            }
+
+            let PostData = {
+                "Invoiceno": $("#invoiceNumber").val(),
+                "BillDate": $("#billDate").val(),
+                "MobileNumber": $("#customerNumber").val(),
+                "Name": $("#customerName").val(),
+                "GSTNumber": $("#customerGstin").val(),
+                "ProductList": productArr,
+                "TotalTaxable": parseFloat($("#spn_totalTaxable").text()),
+                "TotalCGST": parseFloat($("#spn_totalCGST").text()),
+                "TotalSGST": parseFloat($("#spn_totalSGST").text()),
+                "TotalIGST": parseFloat($("#spn_totalIGST").text()),
+                "GrandTotal": parseFloat($("#spn_grandTotal").text())
+            };
+
+            // Directly call the print helper function, skipping the save step
+            PrintBill(PostData);
+        }
+
+        /**
+         * Helper function to generate and trigger the print dialog.
+         * This is called by both SaveAndPrintBill() and PrintBillOnly().
+         */
+        function PrintBill(data) {
+            $.ajax({
+                url: '@Url.Action("BillTemplate", "Bill")', // Make sure Controller is "Bill"
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (html) {
+                    var iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+                    var doc = iframe.contentWindow.document;
+                    doc.open();
+                    doc.write(html);
+                    doc.close();
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    setTimeout(() => document.body.removeChild(iframe), 1000);
+                },
+                error: function () {
+                    alert("An error occurred while generating the print template.");
+                }
+            });
+        }
+    </script>
+}

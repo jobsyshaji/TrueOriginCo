@@ -1,0 +1,91 @@
+﻿
+@{
+    ViewBag.Title = "SendAutomatedMail";
+    Layout = "~/Areas/BillSoftware/Views/Shared/_BillLayoutPage.cshtml";
+}
+
+<div class="card">
+    <div class="card-body">
+        <div class="form-group">
+            <label for="toEmail">To Email address</label>
+            <input type="email" class="form-control" id="toEmail" placeholder="Enter email">
+        </div>
+        <div class="form-group">
+            <label for="companyName">Company Name</label>
+            <input type="text" class="form-control" id="companyName" placeholder="Company Name">
+        </div>
+        <div class="form-group">
+            <label for="hrName">HR Name</label>
+            <input type="text" class="form-control" id="hrName" placeholder="HR Name">
+        </div>
+        <div class="form-group">
+            <label for="jobProfile">Job Profile</label>
+            <input type="text" class="form-control" id="jobProfile" placeholder="Job Profile" value=".Net Developer">
+        </div>
+        <button type="submit" class="btn btn-primary" onclick="SendEmail(this)">Send</button>
+    </div>
+   
+</div>
+
+@section scripts{
+    <script>
+        function SendEmail(btn) {
+            $(btn).html('sending...').attr('disabled',true);
+            var postData = {
+                "ToEmail": $("#toEmail").val(),
+                "CompanyName": $("#companyName").val(),
+                "HrName": $("#hrName").val(),
+                "JobProfile": $("#jobProfile").val()
+            };
+
+            fetch("@Url.Action("SendEmailAsync", "EmailService", new {areas = "MailSender" })", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(postData)
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+                $(btn).html('Send').attr('disabled', false);
+                $("#toEmail").val('');
+                $("#companyName").val('');
+                $("#hrName").val('');
+                $("#jobProfile").val('');
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                $(btn).html('Send').attr('disabled', false);
+                alert("Something went wrong.");
+            });
+        }
+
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+        }
+
+        $('#toEmail').on('input', function () {
+            
+            const email = $(this).val();
+            const emailPattern = /^([a-zA-Z0-9._%+-]+)@@([a-zA-Z0-9.-]+)\.([a-z]{2,})$/;
+
+            if (emailPattern.test(email)) {
+                const parts = email.split('@@');
+                let hrName = parts[0];
+                const domain = parts[1].split('.')[0];
+                hrName = capitalizeFirstLetter(hrName);
+                if (hrName.includes('Career') || hrName.includes('Hr') || hrName.includes('Job') || hrName.includes('Recruit')) {
+                    hrName = "Hiring team"
+                }
+                $('#hrName').val(hrName);
+                $('#companyName').val(capitalizeFirstLetter(domain));
+                $('#jobProfile').val('.Net Developer');
+            } else {
+                $('#hrName').val('');
+                $('#companyName').val('');
+            }
+        });
+
+    </script>
+}

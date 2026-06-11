@@ -1,0 +1,19 @@
+﻿Dear {hrname},
+
+I am writing to express my strong interest in the {jobprofile} position at {companyname} which I saw advertised on LinkedIn.With my background in designing secure, scalable applications for the cybersecurity industry, I was immediately drawn to this opportunity.
+
+With 4 years of experience at a cybersecurity firm, I’ve developed secure and scalable web applications using .NET Core, Angular, and MySQL. My background includes leading a team of developers, optimizing backend performance by 90%, and building real-time systems.
+
+As a final point, I am currently serving my notice period and can join the team promptly to begin contributing.
+
+My resume is attached for your review, and I look forward to the possibility of discussing how my skills in full-stack development and team leadership can benefit {companyname}.
+
+Thank you for your time and consideration.
+
+Best regards,  
+Job C S 
+
++91 8921448261  
+csjob.developer@gmail.com  
+linkedin.com/in/cs-job  
+csjob.github.io/personalwebsite

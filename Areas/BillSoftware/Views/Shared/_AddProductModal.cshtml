@@ -1,0 +1,110 @@
+﻿
+<div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addItemModalLabel">Add New Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addItemForm">
+                    <div class="mb-3">
+                        <label for="itemName" class="form-label">Item Name</label>
+                        <input type="text" class="form-control" id="itemName" placeholder="Enter item name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="itemRate" class="form-label">Rate</label>
+                        <input type="text" class="form-control" id="itemRate" placeholder="Enter price" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="itemQuantity" class="form-label">Quantity</label>
+                        <input type="text" class="form-control" id="itemQuantity" placeholder="Enter quantity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="itemavailable" class="form-label">Available Stock</label>
+                        <input type="text" class="form-control" id="itemavailable" placeholder="Enter quantity" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="itemDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="itemDescription" placeholder="Enter description"></textarea>
+                    </div>
+                </form>
+            </div>
+            @*<div class="d-flex justify-content-center">*@
+            @*<button type="button" class="btn btn-primary" id="saveItemButton" onclick="SaveProduct()">Save</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>*@
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="saveItemButton" onclick="SaveProduct()">Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+     function SaveProduct_OLD() {
+            let PostData = {
+                "PId": $("#saveItemButton").attr("data-pid"),
+                "PName": $("#itemName").val(),
+                "Rate": $("#itemRate").val(),
+                "PQuantity": $("#itemQuantity").val(),
+                "AvailableStock": $("#itemavailable").val(),
+                "Description": $("#itemDescription").val(),
+            }
+            
+
+            //let Url = "@@Url.Action("AddProduct", "AddProduct", new {httproute=""})";
+            let Url = "@Url.RouteUrl("P-Save", new {httproute=""})";
+            
+
+            return fetch(Url, {
+                method: 'POST',
+                body: JSON.stringify(PostData),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+
+            }).then((response) => response.json())
+                .then((result) => {
+                    
+                    if (result.Status) {
+                        SwalAlert('success', result.Message, 'Success!');
+                        $("#addItemModal").modal('hide');
+                        BindProductTable();
+                        ClearField();
+                    } else {
+                        SwalAlert('error', result.Message, 'Error!');
+                    }
+                })
+                .catch((error) => {
+                    
+                    alert("Error in adding product");
+                })
+        }
+
+    function SaveProductCommon() {
+        
+        let PostData = {
+            "PId": $("#saveItemButton").attr("data-pid"),
+            "PName": $("#itemName").val(),
+            "Rate": $("#itemRate").val(),
+            "PQuantity": $("#itemQuantity").val(),
+            "AvailableStock": $("#itemavailable").val(),
+            "Description": $("#itemDescription").val(),
+        };
+
+        let Url = "@Url.RouteUrl("P-Save", new {httproute=""})";
+
+        return fetch(Url, { //we are returning the response.
+            method: 'POST',
+            body: JSON.stringify(PostData),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then((response) => response.json());
+    }
+
+</script>
